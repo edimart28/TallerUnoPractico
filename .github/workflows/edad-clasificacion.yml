@@ -43,6 +43,13 @@ jobs:
           MONTHS=$(($(date -d "$CURRENT_DATE" +%m) - $(date -d "$BIRTH_DATE" +%m)))
           DAYS=$(($(date -d "$CURRENT_DATE" +%d) - $(date -d "$BIRTH_DATE" +%d)))
 
+          if  [ $DAYS -lt 0 ]; then
+            MONTHS=$((MONTHS - 1))
+            PREV_MONTH=$(date -d "$CURRENT_DATE - 1 month" +%m)
+            PREV_YEAR=$(date -d "$CURRENT_DATE - 1 month" +%Y)
+            DAYS_IN_PREV_MONTH=$(date -d "$PREV_YEAR-$PREV_MONTH-01 +1 month -1 day" +%d)
+            DAYS=$((DAYS + DAYS_IN_PREV_MONTH))  
+                          
           if [ $DAYS -lt 0 ]; then
             MONTHS=$((MONTHS - 1))
             DAYS=$((DAYS + 30))
