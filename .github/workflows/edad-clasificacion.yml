@@ -48,11 +48,8 @@ jobs:
             PREV_MONTH=$(date -d "$CURRENT_DATE - 1 month" +%m)
             PREV_YEAR=$(date -d "$CURRENT_DATE - 1 month" +%Y)
             DAYS_IN_PREV_MONTH=$(date -d "$PREV_YEAR-$PREV_MONTH-01 +1 month -1 day" +%d)
-            DAYS=$((DAYS + DAYS_IN_PREV_MONTH))  
-                          
-          if [ $DAYS -lt 0 ]; then
-            MONTHS=$((MONTHS - 1))
-            DAYS=$((DAYS + 30))
+            DAYS=$((DAYS + DAYS_IN_PREV_MONTH)) 
+                                
           fi
 
           if [ $MONTHS -lt 0 ]; then
