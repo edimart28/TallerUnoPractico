@@ -1,0 +1,87 @@
+name: edad-clasificacion
+
+on:
+  workflow_dispatch:
+    inputs:
+      dia:
+        description: 'Día de nacimiento'
+        required: true
+        type: string
+      mes:
+        description: 'Mes de nacimiento'
+        required: true
+        type: string
+      anio:
+        description: 'Año de nacimiento'
+        required: true
+        type: string
+
+env:
+  LIM_NINEZ: ${{ vars.LIM_NINEZ }}
+  LIM_ADOLESCENCIA: ${{ vars.LIM_ADOLESCENCIA }}
+  LIM_ADULTO_JOVEN: ${{ vars.LIM_ADULTO_JOVEN }}
+  LIM_ADULTO: ${{ vars.LIM_ADULTO }}
+
+jobs:
+  calcular-edad:
+    name: Calcular edad actual
+    runs-on: ubuntu-latest
+    outputs:
+      edad_formateada: ${{ steps.calcular.outputs.edad_formateada }}
+      edad_anios: ${{ steps.calcular.outputs.edad_anios }}
+    steps:
+      - name: Calcular edad
+        id: calcular
+        run: |
+          echo "Fecha de nacimiento: ${{ github.event.inputs.dia }}-${{ github.event.inputs.mes }}-${{ github.event.inputs.anio }}"
+
+          BIRTH_DATE="${{ github.event.inputs.anio }}-${{ github.event.inputs.mes }}-${{ github.event.inputs.dia }}"
+          CURRENT_DATE=$(date +%Y-%m-%d)
+
+          # Cálculo de diferencia de fechas
+          YEARS=$(($(date -d "$CURRENT_DATE" +%Y) - $(date -d "$BIRTH_DATE" +%Y)))
+          MONTHS=$(($(date -d "$CURRENT_DATE" +%m) - $(date -d "$BIRTH_DATE" +%m)))
+          DAYS=$(($(date -d "$CURRENT_DATE" +%d) - $(date -d "$BIRTH_DATE" +%d)))
+
+          if [ $DAYS -lt 0 ]; then
+            MONTHS=$((MONTHS - 1))
+            DAYS=$((DAYS + 30))
+          fi
+
+          if [ $MONTHS -lt 0 ]; then
+            YEARS=$((YEARS - 1))
+            MONTHS=$((MONTHS + 12))
+          fi
+
+          FORMATEADA="$YEARS años, $MONTHS meses, $DAYS días"
+
+          echo "Edad: $FORMATEADA"
+
+          echo "edad_formateada=$FORMATEADA" >> $GITHUB_OUTPUT
+          echo "edad_anios=$YEARS" >> $GITHUB_OUTPUT
+
+  clasificar-etapa:
+    name: Clasificar etapa de vida
+    runs-on: ubuntu-latest
+    needs: calcular-edad
+    steps:
+      - name: Clasificar según la edad
+        run: |
+          EDAD_ANIOS=${{ needs.calcular-edad.outputs.edad_anios }}
+          EDAD_FORMATO="${{ needs.calcular-edad.outputs.edad_formateada }}"
+
+          echo "Edad calculada: $EDAD_FORMATO"
+
+          if [ "$EDAD_ANIOS" -le "$LIM_NINEZ" ] && [ "$EDAD_ANIOS" -ge 5 ]; then
+            ETAPA="Niñez"
+          elif [ "$EDAD_ANIOS" -le "$LIM_ADOLESCENCIA" ]; then
+            ETAPA="Adolescencia"
+          elif [ "$EDAD_ANIOS" -le "$LIM_ADULTO_JOVEN" ]; then
+            ETAPA="Adultos jóvenes"
+          elif [ "$EDAD_ANIOS" -le "$LIM_ADULTO" ]; then
+            ETAPA="Adultos"
+          else
+            ETAPA="Tercera edad"
+          fi
+
+          echo "Etapa de vida: $ETAPA"
